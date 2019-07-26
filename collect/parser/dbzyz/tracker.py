@@ -1,7 +1,7 @@
 import logging
 import _thread
 import threading
-from db.database import MacVod
+from collect.parser.dbzyz.database import DBVod
 import time
 import sys
 
@@ -14,7 +14,7 @@ class MovieTracker:
             self.__stop = threading.Event()
             self.__threads = threads
             self.__log_config = config['log']
-            self.__mac_vod_db = MacVod(config['log'], config['dbzyzmactype'], config['database'])
+            self.__vod_db = DBVod(config['log'], config['dbzyzmactype'], config['database'])
             self.__movie_id_set = self.__all_movie_ids()
             self.__tv_stats = self.__all_tv_id_stat()
             self.__logger = logging.getLogger(__name__)
@@ -54,12 +54,12 @@ class MovieTracker:
                 old_stat = int(self.__tv_stats.get(vod_id, sys.maxsize))
                 if stat > 0 and old_stat < stat:
                     self.__logger.info('update tv id {},name {}'.format(vod_id,vod_event.name()))
-                    self.__mac_vod_db.update_mac_vod(vod_event)
+                    self.__vod_db.update_mac_vod(vod_event)
                 else:
                     self.__logger.info('ignore update {} {}'.format(vod_id, vod_event.name()))
 
             else:
-                self.__mac_vod_db.insert_mac_vod(vod_event)
+                self.__vod_db.insert_mac_vod(vod_event)
                 self.__logger.info('new vod id:{},name:{}'.format(vod_id, vod_event.name()))
             self.__movie_id_set.add(int(vod_id))
 
@@ -72,11 +72,11 @@ class MovieTracker:
                  time.sleep(5)
             self.__stop.set()
             self.__logger.info('event queue is empty')
-            self.__mac_vod_db.close()
+            self.__vod_db.close()
 
         def __all_movie_ids(self):
             columns = 'vod_id'
-            id_tuples = self.__mac_vod_db.select('mac_vod', None, columns)
+            id_tuples = self.__vod_db.select('mac_vod', None, columns)
             id_set = set()
             for id_t in id_tuples:
                 id_set.add(id_t[0])
@@ -85,7 +85,7 @@ class MovieTracker:
         def __all_tv_id_stat(self):
             columns = 'vod_id,vod_state'
             condition = 'type_id_1 in(2,3,4)'
-            vod_stat = self.__mac_vod_db.select('mac_vod', condition, columns)
+            vod_stat = self.__vod_db.select('mac_vod', condition, columns)
             stat_map = {}
             for stat in vod_stat:
                 stat_map[stat[0]] = stat[1]

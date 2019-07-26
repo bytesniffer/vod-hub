@@ -3,18 +3,9 @@
 
 name: Python movie resource collector from www.dbzyz.com
 
-
 apis:
   - name: dbzyz
     url: 'http://www.dbzyz.com/inc/dbm3u8.php?ac=videolist&pg={pg}'
-
-database:
-  name: mysql
-  user: "root"
-  passwd: "123456"
-  url: "localhost"
-  port: "3306"
-  db: "collectMovies"
 
 # zdbyz mac type to local type mapper
 dbzyz:
@@ -45,10 +36,9 @@ dbzyz:
   exclude:
      - 108
 
-
 log:
   pattern: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
   level: INFO
-  file: movies.log
+  file: dbzyz_movies.log
 
 

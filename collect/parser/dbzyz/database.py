@@ -1,18 +1,13 @@
 import pymysql
 import time
 import logging
+from collect.models import Movietype, Movie,db
 
 
-class MacVod:
+class MovieRepository:
     def __init__(self, log_config, mac_type_mapper, dbconfig):
         self.__dbconfig = dbconfig
         self.__log_config = log_config
-        self.__db = pymysql.connect(self.__dbconfig['url'],
-                                    self.__dbconfig['user'],
-                                    self.__dbconfig['passwd'],
-                                    self.__dbconfig['db'],
-                                    charset='utf8')
-        self.__cursor = self.__db.cursor()
         self.__mac_type_mapper = mac_type_mapper
         self.__mac_type_pid_mapper = self.__mac_type_pid_mapper()
         self.__logger = logging.getLogger(__name__)
@@ -26,22 +21,45 @@ class MacVod:
         self.__logger.addHandler(console)
         self.__logger.addHandler(fhandler)
 
-    def insert_mac_vod(self, vod):
-
+    def insert_movie(self, vod):
+        type_id = self.__mac_type_mapper.get(int(vod.tid()), -1)
+        vod_status = 1
+        if type_id < 0:
+          self.__logger.info('not found type id:{},{}'.format(vod.id(),
+                                                              vod.type()))
+          vod_status = -1
+        movie = Movie(
+            type_id=type_id,
+            type_group_id=self.__mac_type_pid_mapper[type_id],
+            title=vod.name(),
+            year=vod.year(),
+            poster=vod.pic(),
+            actor=vod.actor(),
+            director=vod.director(),
+            remark=vod.note(),
+            updated_episode=vod.state(),
+            language=str(vod.lang()),
+            area=vod.area(),
+            info=vod.des(),
+            url=vod.content(),
+            source=vod.content_flag(),
+            source_id=vod.id(),
+            release_time=self.__date_timestamp(vod.last_update()),
+            create_time=int(time.time()),
+            status=vod_status)
         insert_sql = """INSERT INTO mac_vod(vod_id,type_id,type_id_1,vod_name,vod_year,
                                           vod_pic,vod_actor,vod_director,vod_remarks,vod_state,
                                           vod_lang,vod_class,vod_area,vod_play_from,vod_content,vod_play_server,
                                           vod_play_url,vod_down_url,vod_time,vod_time_add,
                                           vod_status) values({})""".format(
                                           self.__format_values(vod))
-
         try:
-            self.__cursor.execute(insert_sql)
-            self.__db.commit()
+            db.session.add(movie)
+            db.session.commit()
         except:
-            self.__db.rollback()
+            db.rollback()
 
-    def update_mac_vod(self, vod):
+    def update_movie(self, vod):
         filed_values = """
                         vod_remarks='{marks}',vod_state='{state}',vod_play_url='{play_url}'
                        """.format(marks=vod.note(),
@@ -86,7 +104,7 @@ class MacVod:
         timestamp = time.strptime(d, '%Y-%m-%d %H:%M:%S')
         return time.mktime(timestamp)
 
-    def update(self, table, field_values, condition):
+    def update_movie(self, table, field_values, condition):
         update_sql = """
               update  {} set {}
                """.format(table, field_values)
@@ -94,10 +112,7 @@ class MacVod:
             update_sql += "where {}".format(condition)
         self.__cursor.execute(update_sql)
 
-    def delete(self, sql):
-        self.__cursor.execute(sql)
-
-    def select(self, table, condition, columns):
+    def select_movie(self, table, condition, columns):
         select_sql = """
               select {}
               from {} """.format(columns, table)
@@ -106,21 +121,16 @@ class MacVod:
         self.__cursor.execute(select_sql)
         return self.__cursor.fetchall()
 
-    def __mac_type_pid_mapper(self):
-        columns = "type_id,type_pid"
-        records = self.select('mac_type', None, columns)
+
+class MovieTypeRepository:
+
+    def id_gid_mapper(self):
+        records = Movietype.query.with_entities(Movietype.id, Movietype.group_id).all()
         map = {}
         for r in records:
-            map[r[0]] = r[1]
+          map[r[0]] = r[1]
         return map
 
-    def select_mac_columns(self):
-        columns = """vod_id,type_id,type_id_1,vod_name,vod_year,vod_pic,vod_actor,
-                   vod_director,vod_state,vod_language,vod_class,vod_area,vod_play_from,
-                   vod_content,vod_play_note,vod_time,vod_time_add,vod_status"""
-        return columns
 
-    def close(self):
-        self.__db.close()
 
 
