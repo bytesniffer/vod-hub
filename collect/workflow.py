@@ -2,9 +2,9 @@ import urllib
 import time
 import logging
 import queue
-from parser.dbzyz.page import Page
-from parser.dbzyz.vod import Vod
-from parser.dbzyz.tracker import MovieTracker
+from collect.parser.dbzyz.page import Page
+from collect.parser.dbzyz.vod import Vod
+from collect.parser.dbzyz.tracker import MovieTracker
 from xmljson import yahoo
 from xml.etree.ElementTree import fromstring
 from json import dumps
@@ -15,7 +15,8 @@ class Workflow:
     def __init__(self, config):
         self.__config = config
         self.__log_config = config['log']
-        self.__apis = config['apis']
+        self.__apis = config['apis']['m3u8']
+        self.__sources = self.__source()
         self.__logger = logging.getLogger(__name__)
         self.__logger.setLevel(logging.INFO)
         fhandler = logging.FileHandler(self.__log_config['file'])
@@ -27,7 +28,7 @@ class Workflow:
         self.__logger.addHandler(console)
         self.__logger.addHandler(fhandler)
         self.__workQueue = queue.Queue(100)
-        self.__movie_tracker = MovieTracker(config, 1, self.__workQueue)
+        self.__movie_tracker = MovieTracker(self.__sources, config, 1, self.__workQueue)
 
     def run(self, page=1):
         self.__logger.info('config as following: '+str(self.__config))
@@ -64,6 +65,7 @@ class Workflow:
         while True:
             try:
                 page_data = self.__page(api['url'], page)
+                # different page struct
                 rss = page_data['rss']['list']
                 self.__logger.info(str(page_data['rss']))
                 if rss is not None:
@@ -109,7 +111,7 @@ class Workflow:
                  pic : {pic}
                  note: {note}
                  state: {state}
-                 udpate : {update}
+                 update : {update}
                  content:{content}
                  flag： {flag}
                  ------------
@@ -133,3 +135,9 @@ class Workflow:
             self.__workQueue.put(vod)
 
         return vods_format
+
+    def __source(self):
+        sources = []
+        for s in self.__config['apis']['m3u8']:
+            sources.append(s['source'])
+        return sources

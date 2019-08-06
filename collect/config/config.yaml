@@ -1,0 +1,95 @@
+
+
+
+name: Python movie resource collector from www.dbzyz.com
+
+apis:
+  m3u8:
+    - name: dbzyz
+      source: dbm3u8
+      url: 'http://www.dbzyz.com/inc/dbm3u8.php?ac=videolist&pg={pg}'
+  download:
+
+#},
+# zdbyz mac type to local type mapper
+vod_type:
+    dbm3u8:
+     1:
+       name: 电影
+       local_id: 1000
+     2:
+       name: 连续剧
+       local_id: 2000
+     3:
+       name: 综艺
+       local_id: 3000
+     4:
+       name: 动漫
+       local_id: 4000
+     5:
+       name: 动作片
+       local_id: 1010
+     6:
+       name: 喜剧片
+       local_id: 1020
+     7:
+       name: 爱情片
+       local_id: 1030
+     8:
+       name: 科幻片
+       local_id: 1040
+     9:
+       name: 恐怖片
+       local_id: 1050
+     10:
+       name: 剧情片
+       local_id: 1060
+     11:
+       name: 战争片
+       local_id: 1070
+     24:
+       name: 伦理类
+       local_id: 1080
+     12:
+       name: 国产剧
+       local_id: 2010
+     13:
+       name: 香港剧
+       local_id: 2020
+     14:
+       name: 台湾剧
+       local_id: 2020
+     15:
+       name: 欧美剧
+       local_id: 2040
+     16:
+       name: 日本剧
+       local_id: 2030
+     17:
+       name: 韩剧
+       local_id: 2030
+     18:
+       name: 泰剧
+       local_id: 2050
+     19:
+       name: 伦理　
+       local_id: 1080
+     20:
+       name: 其他
+       local_id: 5000
+     21:
+       name: 其他
+       local_id: 5000
+     22:
+       name: 纪录片
+       local_id: 2060
+
+     exclude_local_id:
+          - 108
+
+log:
+  pattern: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+  file: dbzyz_movies.log
+
+

@@ -1,22 +1,22 @@
 import logging
 import _thread
 import threading
-from collect.parser.dbzyz.database import DBVod
+from collect.parser.dbzyz.database import MovieRepository
 import time
 import sys
+from collect.models import Movietype, Movie
 
 
 class MovieTracker:
-
-        def __init__(self, config, threads, task_queue):
+        def __init__(self, sources, config, threads, task_queue):
             self.__config = config
             self.__task_queue = task_queue
             self.__stop = threading.Event()
             self.__threads = threads
             self.__log_config = config['log']
-            self.__vod_db = DBVod(config['log'], config['dbzyzmactype'], config['database'])
-            self.__movie_id_set = self.__all_movie_ids()
-            self.__tv_stats = self.__all_tv_id_stat()
+            self.__vod_db = MovieRepository(config['log'], config['vod_type'])
+            self.__movie_id_set = self.__all_movie_ids(sources)
+            self.__tv_stats = self.__all_tv_id_stat(sources)
             self.__logger = logging.getLogger(__name__)
             self.__logger.setLevel(logging.INFO)
             fhandler = logging.FileHandler(self.__log_config['file'])
@@ -43,7 +43,7 @@ class MovieTracker:
         def __process(self, tid, vod_event):
             self.__logger.info('{} process {}'.format(tid, vod_event))
             vod_id = int(vod_event.id())
-            if vod_id in self.__movie_id_set:
+            if vod_id in self.__movie_id_set.get(vod_event.content_flag(), {}):
                 # update
                 note = str(vod_event.note())
                 stat = int(vod_event.state())
@@ -51,17 +51,17 @@ class MovieTracker:
                 if stat == 0 and note.isdigit() and int(note) > 0:
                     stat = int(note)
                     vod_event.vod()['state'] = vod_event.note()
-                old_stat = int(self.__tv_stats.get(vod_id, sys.maxsize))
+                old_stat = int(self.__tv_stats.get(vod_event.content_flag(), {}).get(vod_id, sys.maxsize))
                 if stat > 0 and old_stat < stat:
-                    self.__logger.info('update tv id {},name {}'.format(vod_id,vod_event.name()))
-                    self.__vod_db.update_mac_vod(vod_event)
+                    self.__logger.info('update tv id {},name {}'.format(vod_id, vod_event.name()))
+                    self.__vod_db.update_movie(vod_event)
                 else:
                     self.__logger.info('ignore update {} {}'.format(vod_id, vod_event.name()))
 
             else:
-                self.__vod_db.insert_mac_vod(vod_event)
+                self.__vod_db.insert_movie(vod_event)
                 self.__logger.info('new vod id:{},name:{}'.format(vod_id, vod_event.name()))
-            self.__movie_id_set.add(int(vod_id))
+            self.__movie_id_set.get(vod_event.content_flag()).add(int(vod_id))
 
         def __type_filter(self, vod_event):
             print('type filter')
@@ -74,22 +74,31 @@ class MovieTracker:
             self.__logger.info('event queue is empty')
             self.__vod_db.close()
 
-        def __all_movie_ids(self):
-            columns = 'vod_id'
-            id_tuples = self.__vod_db.select('mac_vod', None, columns)
-            id_set = set()
-            for id_t in id_tuples:
-                id_set.add(id_t[0])
-            return id_set
+        def __all_movie_ids(self, sources):
+            source_movie_id_map = {}
+            for s in sources:
+                id_tuples = self.__vod_db.select_movie((Movie.source_id),
+                                                       (Movie.source == s))
+                id_set = set()
+                for id_t in id_tuples:
+                    id_set.add(id_t[0])
+                source_movie_id_map[s] = id_set
+            return source_movie_id_map
 
-        def __all_tv_id_stat(self):
-            columns = 'vod_id,vod_state'
-            condition = 'type_id_1 in(2,3,4)'
-            vod_stat = self.__vod_db.select('mac_vod', condition, columns)
-            stat_map = {}
-            for stat in vod_stat:
-                stat_map[stat[0]] = stat[1]
-            return stat_map
+        def __all_tv_id_stat(self, sources):
+            source_tv_stat = {}
+            for s in sources:
+                vod_stat = self.__vod_db.select_movie((Movie.source_id,
+                                                       Movie.update_episode),
+                                                      (Movie.type_id.in_(['2000',
+                                                                        '3000',
+                                                                        '4000']),
+                                                       Movie.source == s))
+                stat_map = {}
+                for stat in vod_stat:
+                    stat_map[stat[0]] = stat[1]
+                source_tv_stat[s] = stat_map
+            return source_tv_stat
 
 
 

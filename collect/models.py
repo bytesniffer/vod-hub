@@ -1,9 +1,9 @@
 # _*_ coding: utf-8 _*_
-__author__ = 'mtianyan'
+__author__ = 'bytesniffer'
 __date__ = '2017/8/26 17:05'
 
 from flask_sqlalchemy import SQLAlchemy
-from collect.config.base_config import SQLALCHEMY_DATABASE_URI, ADMIN, ADMIN_PASSWORD
+from collect.config.base_config import SQLALCHEMY_DATABASE_URI
 from datetime import datetime
 from flask import Flask
 
@@ -27,7 +27,7 @@ class Movietype(db.Model):
     update_time = db.Column(db.DateTime, index=False, default=datetime.now)  # create time
     status = db.Column(db.INT, index=False, default=0)
     # （设置外键的第二步）关联模型，相互关系
-    movies = db.relationship("Movie", backref='tag')  # 电影外键关系关联
+    # movies = db.relationship("Movie", backref='tag')  # 电影外键关系关联
 
     def __repr__(self):
         return "<Movie type %r>" % self.name
@@ -50,10 +50,10 @@ class Movie(db.Model):
     #  （设置外键第一步）
     type_id = db.Column(db.CHAR(4), db.ForeignKey('movie_type.id'))  # 所属类型
     type_group_id = db.Column(db.CHAR(2), nullable=False)  # 所属标签
-    remark = db.Column(db.String(15), comment='quality of movie')
-    star = db.Column(db.SmallInteger)  # 星级
-    playnum = db.Column(db.BigInteger)  # 播放量
-    commentnum = db.Column(db.BigInteger)  # 评论量
+    note = db.Column(db.String(15), comment='quality of movie,episode updated')
+    star = db.Column(db.SmallInteger, default=0)  # 星级
+    playnum = db.Column(db.BigInteger, default=0)  # 播放量
+    commentnum = db.Column(db.BigInteger, default=0)  # 评论量
     language = db.Column(db.String(25))
     source = db.Column(db.String(15), comment='resource provider code')
     source_id = db.Column(db.INT, comment='original resource id on provider side')
@@ -63,7 +63,6 @@ class Movie(db.Model):
     create_time = db.Column(db.DateTime, index=False)  # create time,no default time
     update_time = db.Column(db.DateTime, index=False, default=datetime.now)  # create time
     status = db.Column(db.INT, index=False, default=0) # 默认禁用
-
 
     def __repr__(self):
         return "<Movie %r>" % self.title

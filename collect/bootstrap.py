@@ -3,7 +3,7 @@
 
 import yaml
 import argparse
-from workflow import Workflow
+from collect.workflow import Workflow
 
 
 def __arg_parse():
@@ -17,8 +17,7 @@ def __arg_parse():
 
 if __name__ == '__main__':
   args = __arg_parse()
-  print(args)
   config_file = open(args.config, encoding='utf-8')
   configs = yaml.load(config_file)
   workflow = Workflow(configs)
-  workflow.run(1)
+  workflow.run(385)
