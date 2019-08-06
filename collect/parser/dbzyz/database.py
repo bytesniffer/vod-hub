@@ -1,7 +1,7 @@
 import time
 from datetime import datetime,date
 import logging
-from collect.models import Movietype, Movie, db
+from models import Movietype, Movie, db
 
 
 class MovieRepository:

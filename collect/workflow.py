@@ -2,9 +2,9 @@ import urllib
 import time
 import logging
 import queue
-from collect.parser.dbzyz.page import Page
-from collect.parser.dbzyz.vod import Vod
-from collect.parser.dbzyz.tracker import MovieTracker
+from parser.dbzyz.page import Page
+from parser.dbzyz.vod import Vod
+from parser.dbzyz.tracker import MovieTracker
 from xmljson import yahoo
 from xml.etree.ElementTree import fromstring
 from json import dumps

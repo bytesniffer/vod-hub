@@ -3,7 +3,7 @@ __author__ = 'bytesniffer'
 __date__ = '2017/8/26 17:05'
 
 from flask_sqlalchemy import SQLAlchemy
-from collect.config.base_config import SQLALCHEMY_DATABASE_URI
+from config.base_config import SQLALCHEMY_DATABASE_URI
 from datetime import datetime
 from flask import Flask
 

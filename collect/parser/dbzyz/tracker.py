@@ -1,10 +1,10 @@
 import logging
 import _thread
 import threading
-from collect.parser.dbzyz.database import MovieRepository
+from parser.dbzyz.database import MovieRepository
 import time
 import sys
-from collect.models import Movietype, Movie
+from models import Movietype, Movie
 
 
 class MovieTracker:
