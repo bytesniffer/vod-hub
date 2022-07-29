@@ -72,7 +72,7 @@ queuelib==1.5.0
 redis==2.10.6
 reportlab==3.3.0
 requests==2.9.1
-Scrapy==1.6.0
+Scrapy==2.6.2
 scrapy-redis==0.6.8
 service-identity==18.1.0
 sessioninstaller==0.0.0
